@@ -5,6 +5,7 @@ import numpy as np
 from transformers import GPT2Tokenizer
 
 from interact_adapter import interact
+from server.rest_api import start_api
 from utils.helper import load_classifier, load_model, load_model_recursive
 from evaluate import evaluate
 
@@ -40,6 +41,7 @@ def run_model():
     parser.add_argument('--gamma', type=float, default=1.0)
     parser.add_argument("--max_history", type=int, default=-1)
     parser.add_argument('--evaluate', action='store_true', help='evaluate')
+    parser.add_argument('--api', action='store_true', help='run in api mode')
     parser.add_argument('--wd', action='store_true', help='greedy based on rev comments')
     parser.add_argument('--verbose', action='store_true', help='verbose mode, no comet print in the terminal')
     parser.add_argument('--bow_scale_weight', type=float, default=20)
@@ -76,6 +78,7 @@ def run_model():
                                      args.load_check_point_adapter, verbose=True)
     else:
         model = load_model(GPT2LMHeadModel(config), args.model_path + f"{args.model_size}_ft.pkl", verbose=True)
+    print("Hello, i am here")
     model.to(device).eval()
 
     # Freeze Models weights
@@ -89,8 +92,9 @@ def run_model():
     param_grid = {'iter': [75], 'window': [0], 'steps': [0.02]}
 
     if args.evaluate:
-        evaluate(args, model, tokenizer, classifier, args.entailment, args.task_ent, class2idx, param_grid, device,
-                 logger)
+        evaluate(args, model, tokenizer, classifier, args.entailment, args.task_ent, class2idx, param_grid, device, logger)
+    elif args.api:
+        start_api(args, model, tokenizer)
     else:
         interact(args, model, tokenizer, classifier, class2idx, device)
 
