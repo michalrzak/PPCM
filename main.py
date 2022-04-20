@@ -59,7 +59,7 @@ def run_model():
     np.random.seed(args.seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    if (args.load_check_point_adapter != "None"):
+    if args.load_check_point_adapter != "None":
         print("LOADING ADAPTER CONFIG FILE AND INTERACTIVE SCRIPT")
         from models.pytorch_pretrained_bert.modeling_adapter import GPT2LMHeadModel, GPT2Config
     else:
@@ -70,7 +70,7 @@ def run_model():
     config = GPT2Config.from_json_file(os.path.join(args.model_path, 'config.json'))
     tokenizer = GPT2Tokenizer.from_pretrained(args.model_path)
 
-    if (args.load_check_point_adapter != "None"):
+    if args.load_check_point_adapter != "None":
         print("Loading ADAPTERS")
         model = load_model_recursive(GPT2LMHeadModel(config, default_task_id=args.task_id),
                                      args.load_check_point_adapter, verbose=True)
@@ -86,11 +86,9 @@ def run_model():
 
     logger = None
 
-    ## set iter to 0 to run the adapter 
-    ## set iter to 50 to run WD
     param_grid = {'iter': [75], 'window': [0], 'steps': [0.02]}
 
-    if (args.evaluate):
+    if args.evaluate:
         evaluate(args, model, tokenizer, classifier, args.entailment, args.task_ent, class2idx, param_grid, device,
                  logger)
     else:
