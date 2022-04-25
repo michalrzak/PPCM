@@ -1,3 +1,22 @@
+# About this fork
+This fork aims to encapsulate and modify the original project, so that the response generator can easily be used as a sentiment-controllable chatbot. It removes all other categories but positive and negative. Further it adds a docker container witch enables the interaction with the chatbot via a REST API.
+
+To build the container simply run
+```
+docker build -t PPCM .
+```
+
+To start the container run
+```
+nvidia-docker run -p 5000:5000 PPCM
+```
+
+Now you can send `POST` requests to localhost:5000/response in the format 
+```
+{"utterance": "Are you thirsty?", "sentiment": "positive"}
+```
+
+
 # Plug-and-Play Conversational Models
 <img src="graphics/pytorch-logo-dark.png" width="10%"> [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
