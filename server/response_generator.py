@@ -11,7 +11,6 @@ from utils.utils_sample import scorer
 class ResponseGenerator:
     """
     Class used to generate sentiment colored responses given an input.
-
     The code in this class was adapted from interact_adapter.py
     """
 
@@ -28,12 +27,12 @@ class ResponseGenerator:
         classifiers = {}
 
         args.discrim = "sentiment"
-        args.label_class = 2
+        args.label_class = Sentiment.POSITIVE.get_label_class()
         classifier, class2idx = load_classifier(args, model)
         classifiers[Sentiment.POSITIVE] = [classifier, class2idx]
 
         args.discrim = "sentiment"
-        args.label_class = 3
+        args.label_class = Sentiment.NEGATIVE.get_label_class()
         classifier, class2idx = load_classifier(args, model)
         classifiers[Sentiment.NEGATIVE] = [classifier, class2idx]
 
@@ -48,15 +47,15 @@ class ResponseGenerator:
 
         if k == 0:
             return logits
-        else:
-            values = torch.topk(logits, k)[0]
-            batch_minimums = values[:, -1].view(-1, 1).expand_as(logits)
 
-            # don't entirely understand why this is working, as I think the parameters should be mismatched
-            # TODO: Look into why this is working
-            if probs:
-                return torch.where(logits < batch_minimums, torch.ones_like(logits) * 0.0, logits)
-            return torch.where(logits < batch_minimums, torch.ones_like(logits) * -1e10, logits)
+        values = torch.topk(logits, k)[0]
+        batch_minimums = values[:, -1].view(-1, 1).expand_as(logits)
+
+        # don't entirely understand why this is working, as I think the parameters should be mismatched
+        # TODO: Look into why this is working
+        if probs:
+            return torch.where(logits < batch_minimums, torch.ones_like(logits) * 0.0, logits)
+        return torch.where(logits < batch_minimums, torch.ones_like(logits) * -1e10, logits)
 
     def __sample(self, context, sample=True):
         output = torch.tensor(context, device=self._device, dtype=torch.long)
