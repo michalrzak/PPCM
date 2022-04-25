@@ -6,19 +6,19 @@ from server.response_generator import ResponseGenerator
 app = Flask(__name__)
 chatbot: ResponseGenerator = None
 
-invalid_request = {"error", "Invalid request format"}, 400
-internal_error = {"error", "Internal server error, please try again"}, 500
+invalid_request = {"error": "Invalid request format"}, 400
+internal_error = {"error": "Internal server error, please try again"}, 500
 
 
 def start_api(args, model, tokenizer):
     global chatbot, app
     chatbot = ResponseGenerator(args, model, tokenizer)
-    app.run(debug=True, use_reloader=False)
+    app.run(debug=True, use_reloader=False, host='0.0.0.0')
 
 
 @app.post("/response")
 def get_response():
-    global chatbot
+    global chatbot, internal_error, invalid_request
     if not request.is_json:
         return invalid_request
 
@@ -33,6 +33,12 @@ def get_response():
     try:
         response = chatbot.get_response(sentiment, utterance)
     except Exception as e:
+        print(e)
         return internal_error
 
     return {"response": response}, 200
+
+
+@app.get("/test")
+def test():
+    return {"OK": "ok"}
