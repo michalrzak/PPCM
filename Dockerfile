@@ -16,7 +16,7 @@ COPY requirements.txt requirements.txt
 RUN /usr/local/bin/pip3 install --no-cache-dir -r requirements.txt
 # RUN ./download_data.sh
 
-COPY punkt_downloader.py punkt_downloader.py
+RUN echo 'import nltk' >> punkt_downloader.py && echo 'nltk.download("punkt")' >> punkt_downloader.py
 
 RUN /usr/local/bin/python3 punkt_downloader.py
 
