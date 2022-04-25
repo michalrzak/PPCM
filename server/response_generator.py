@@ -61,12 +61,13 @@ class ResponseGenerator:
         output = torch.tensor(context, device=self._device, dtype=torch.long)
         output_response = output.new_zeros([output.size(0), 0])
         stopped = [0 for _ in range(output.size(0))]
-        for i in range(self._args.repetition_penalty.length):
+
+        for i in range(self._args.length):
             prev = output[:, -1:]
             _, past = self._model(output[:, :-1])
 
             logits, past = self._model(prev, past=past)
-            logits = logits[:, -1, :] / self._args.repetition_penalty.temperature  # + SmallConst
+            logits = logits[:, -1, :] / self._args.temperature  # + SmallConst
 
             for output_element_idx, output_element in enumerate(output):
                 for token_idx in set(output_element.tolist()):

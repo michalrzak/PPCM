@@ -78,7 +78,6 @@ def run_model():
                                      args.load_check_point_adapter, verbose=True)
     else:
         model = load_model(GPT2LMHeadModel(config), args.model_path + f"{args.model_size}_ft.pkl", verbose=True)
-    print("Hello, i am here")
     model.to(device).eval()
 
     # Freeze Models weights

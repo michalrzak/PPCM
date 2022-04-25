@@ -6,6 +6,9 @@ from server.response_generator import ResponseGenerator
 app = Flask(__name__)
 chatbot: ResponseGenerator = None
 
+invalid_request = {"error", "Invalid request format"}, 400
+internal_error = {"error", "Internal server error, please try again"}, 500
+
 
 def start_api(args, model, tokenizer):
     global chatbot, app
@@ -17,12 +20,12 @@ def start_api(args, model, tokenizer):
 def get_response():
     global chatbot
     if not request.is_json:
-        return {"error", "Invalid request format"}, 400
+        return invalid_request
 
     input_request = request.get_json()
 
     if "utterance" not in input_request or "sentiment" not in input_request:
-        return {"error", "Invalid request format"}, 400
+        return invalid_request
 
     utterance = input_request["utterance"]
     sentiment = Sentiment.from_string(input_request["sentiment"])
@@ -30,8 +33,6 @@ def get_response():
     try:
         response = chatbot.get_response(sentiment, utterance)
     except Exception as e:
-        print(e)
-        return "unlucky"
+        return internal_error
 
-    #print(response)
-    return {"response": response}
+    return {"response": response}, 200

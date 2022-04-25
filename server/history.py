@@ -11,6 +11,6 @@ class History:
     def append(self, __object) -> None:
         self.__history.append(__object)
 
-        if len(self.__history) > self._max_history_saved:
+        if len(self.__history) > self._max_history_saved and self._max_history_saved >= 0:
             self.__history.popleft()
 
