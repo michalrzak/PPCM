@@ -26,8 +26,4 @@ ENV MODEL_SIZE=medium
 # -1 = all of the history is saved
 ENV MAX_HISTORY=-1
 
-# CMD [ "python3", "./main.py", "--api", "--model_size=$MODEL_SIZE", "--max_history=$MAX_HISTORY" ]
-
 CMD [ "sh", "-c", "python3 ./main.py --api --model_size=$MODEL_SIZE --max_history=$MAX_HISTORY" ]
-
-#CMD python3 ./main.py --api --model_size $MODEL_SIZE --max_history $MAX_HISTORY
