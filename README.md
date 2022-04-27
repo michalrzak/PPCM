@@ -1,5 +1,5 @@
 # About this fork
-This fork aims to encapsulate and modify the original project, so that the response generator can easily be used as a sentiment-controllable chatbot. It removes all other categories but positive and negative. Further it adds a docker container witch enables the interaction with the chatbot via a REST API.
+This fork aims to encapsulate and modify the original project so that the response generator can easily be used as a sentiment-controllable chatbot. It removes all other categories but positive and negative. Further, it adds a docker container which enables the interaction with the chatbot via a REST API.
 
 To build the container simply run
 ```
@@ -8,13 +8,15 @@ docker build -t PPCM .
 
 To start the container run
 ```
-nvidia-docker run -p 5000:5000 PPCM
+nvidia-docker run -p 5000:5000 -it PPCM
 ```
 
 Now you can send `POST` requests to localhost:5000/response in the format 
 ```
 {"utterance": "Are you thirsty?", "sentiment": "positive"}
 ```
+
+When running the container you can also modify two environment variables (`MAX_HISTORY` and `MODEL_SIZE`). `MAX_HISTORY` controls how many past utterances the chatbot considers when generating its answer. By default, this is set to all past utterances (`-1`). `MODEL_SIZE` controls which dialogue model will get loaded. It can be set to `small`, `medium`, or `large`. By default, it is set to `medium`. (Be careful with the `large` model as it requires a lot of GPU VRAM. 
 
 
 # Plug-and-Play Conversational Models
