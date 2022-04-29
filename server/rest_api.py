@@ -1,4 +1,5 @@
 from flask import Flask, request
+from waitress import serve
 
 from server.sentiment import Sentiment
 from server.response_generator import ResponseGenerator
@@ -17,7 +18,6 @@ def start_api(args, model, tokenizer):
     global chatbot, app, IP_ADDRESS, PORT
     chatbot = ResponseGenerator(args, model, tokenizer)
 
-    from waitress import serve
     print(f"Server started on http://{IP_ADDRESS}:{PORT}")
     print("Press CTRL+C to stop the app")
     serve(app, host=IP_ADDRESS, port=PORT)
