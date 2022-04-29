@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.pytorch_pretrained_bert import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 import os
-from transformers import BertTokenizer,BertModel,AutoConfig
+from transformers import BertTokenizer, BertModel
 
 EPSILON = 1e-10
+
 
 class Discriminator(torch.nn.Module):
     """Transformer encoder followed by a Classification Head"""
@@ -15,9 +16,9 @@ class Discriminator(torch.nn.Module):
             class_size,
             pretrained_model="medium",
             cached_mode=False,
-            load_weight=None, 
+            load_weight=None,
             model_pretrained=None,
-            entailment=False, 
+            entailment=False,
             device='cuda'
     ):
         super(Discriminator, self).__init__()
@@ -29,10 +30,11 @@ class Discriminator(torch.nn.Module):
         if model_pretrained != None:
             self.encoder = model_pretrained
         else:
-            self.encoder = load_model(GPT2LMHeadModel(config), model_path+f"{pretrained_model}_ft.pkl", None, verbose=True)
+            self.encoder = load_model(GPT2LMHeadModel(config), model_path + f"{pretrained_model}_ft.pkl", None,
+                                      verbose=True)
         self.embed_size = config.n_embd
-        
-        if(self.entailment):
+
+        if (self.entailment):
             self.classifier_head = AttentionHead(class_size=class_size, embed_size=self.embed_size)
         else:
             self.classifier_head = ClassificationHead(
@@ -40,7 +42,7 @@ class Discriminator(torch.nn.Module):
                 embed_size=self.embed_size
             )
         self.cached_mode = cached_mode
-        if(load_weight != None):
+        if (load_weight != None):
             self.classifier_head.load_state_dict(torch.load(load_weight))
         self.device = device
         self.class_size = class_size
@@ -59,7 +61,7 @@ class Discriminator(torch.nn.Module):
         ).float().to(self.device).detach()
         hidden, _ = self.encoder.transformer(x)
         masked_hidden = hidden * mask
-        if(entailment):
+        if (entailment):
             return masked_hidden
         else:
             avg_hidden = torch.sum(masked_hidden, dim=1) / (
@@ -68,10 +70,10 @@ class Discriminator(torch.nn.Module):
             return avg_hidden
 
     def forward(self, x):
-        if(self.entailment):
-            P = self.avg_representation(x[0].to(self.device),entailment=True)
-            H = self.avg_representation(x[1].to(self.device),entailment=True)
-            logits = self.classifier_head(P,H)
+        if (self.entailment):
+            P = self.avg_representation(x[0].to(self.device), entailment=True)
+            H = self.avg_representation(x[1].to(self.device), entailment=True)
+            logits = self.classifier_head(P, H)
             return logits
         else:
             if self.cached_mode:
@@ -101,43 +103,42 @@ class Scorer(torch.nn.Module):
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         self.bert = BertModel.from_pretrained('bert-base-uncased')
         embedding_dim = self.bert.config.to_dict()['hidden_size']
- 
-        
+
         self.rnn = nn.GRU(embedding_dim,
                           hidden_dim,
-                          num_layers = n_layers,
-                          bidirectional = bidirectional,
-                          batch_first = True,
-                          dropout = 0 if n_layers < 2 else dropout)
-        
+                          num_layers=n_layers,
+                          bidirectional=bidirectional,
+                          batch_first=True,
+                          dropout=0 if n_layers < 2 else dropout)
+
         self.out = nn.Linear(hidden_dim * 2 if bidirectional else hidden_dim, output_dim)
-        
+
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, text):
-        
-        #text = [batch size, sent len]
-                
+
+        # text = [batch size, sent len]
+
         with torch.no_grad():
             embedded = self.bert(text)[0]
-                
-        #embedded = [batch size, sent len, emb dim]
-        
+
+        # embedded = [batch size, sent len, emb dim]
+
         _, hidden = self.rnn(embedded)
-        
-        #hidden = [n layers * n directions, batch size, emb dim]
-        
+
+        # hidden = [n layers * n directions, batch size, emb dim]
+
         if self.rnn.bidirectional:
-            hidden = self.dropout(torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim = 1))
+            hidden = self.dropout(torch.cat((hidden[-2, :, :], hidden[-1, :, :]), dim=1))
         else:
-            hidden = self.dropout(hidden[-1,:,:])
-                
-        #hidden = [batch size, hid dim]
-        
+            hidden = self.dropout(hidden[-1, :, :])
+
+        # hidden = [batch size, hid dim]
+
         output = self.out(hidden)
-        
-        #output = [batch size, out dim]
-        
+
+        # output = [batch size, out dim]
+
         return output
 
 
@@ -166,8 +167,8 @@ class AttentionHead(nn.Module):
         mlp_layers.append(nn.ReLU())
         mlp_layers.append(nn.Dropout(p=0.2))
         mlp_layers.append(nn.Linear(output_dim, output_dim))
-        mlp_layers.append(nn.ReLU())        
-        return nn.Sequential(*mlp_layers)   # * used to unpack list
+        mlp_layers.append(nn.ReLU())
+        return nn.Sequential(*mlp_layers)  # * used to unpack list
 
     def forward(self, sent1_linear, sent2_linear):
         '''
@@ -187,13 +188,13 @@ class AttentionHead(nn.Module):
 
         score1 = torch.bmm(f1, torch.transpose(f2, 1, 2))
         # e_{ij} batch_size x len1 x len2
-        prob1 = F.softmax(score1.view(-1, len2),dim=1).view(-1, len1, len2)
+        prob1 = F.softmax(score1.view(-1, len2), dim=1).view(-1, len1, len2)
         # batch_size x len1 x len2
 
         score2 = torch.transpose(score1.contiguous(), 1, 2)
         score2 = score2.contiguous()
         # e_{ji} batch_size x len2 x len1
-        prob2 = F.softmax(score2.view(-1, len1),dim=1).view(-1, len2, len1)
+        prob2 = F.softmax(score2.view(-1, len1), dim=1).view(-1, len2, len1)
         # batch_size x len2 x len1
 
         sent1_combine = torch.cat(
@@ -223,8 +224,8 @@ class AttentionHead(nn.Module):
 
         h = self.final_linear(h)
 
-
         return h
+
 
 class ClassificationHead(torch.nn.Module):
     """Classification Head for  transformer encoders"""
@@ -255,8 +256,8 @@ def load_model(model, checkpoint, args, verbose=False):
 
         start_model = model
         if (hasattr(model, "transformer")
-            and all(not s.startswith('transformer.')
-                    for s in model_state_dict.keys())):
+                and all(not s.startswith('transformer.')
+                        for s in model_state_dict.keys())):
             print('Loading transfomer only')
             start_model = model.transformer
         start_model.load_state_dict(model_state_dict)

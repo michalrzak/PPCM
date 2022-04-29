@@ -7,7 +7,6 @@ from transformers import GPT2Tokenizer
 from interact_adapter import interact
 from server.rest_api import start_api
 from utils.helper import load_classifier, load_model, load_model_recursive
-from evaluate import evaluate
 
 
 def run_model():
@@ -90,9 +89,7 @@ def run_model():
 
     param_grid = {'iter': [75], 'window': [0], 'steps': [0.02]}
 
-    if args.evaluate:
-        evaluate(args, model, tokenizer, classifier, args.entailment, args.task_ent, class2idx, param_grid, device, logger)
-    elif args.api:
+    if args.api:
         start_api(args, model, tokenizer)
     else:
         interact(args, model, tokenizer, classifier, class2idx, device)
